@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login Page</title>
+  <style>
+    /* Styles for the login page */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #007bff;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 300px;
+      width: 100%;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: calc(100% - 12px);
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px 0;
+      border-radius: 5px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Styles for the admin popup */
+    .admin-page {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 65%;
+      max-width: 800px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .admin-page .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #777;
+    }
+
+    .admin-page h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .admin-page .attempt-log {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      display: block;
+    }
+
+    .admin-page .attempt-log th,
+    .admin-page .attempt-log td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    .admin-page .attempt-log th {
+      background-color: #f2f2f2;
+    }
+
+    .admin-page .access-granted {
+      color: blue;
+    }
+
+    .admin-page .access-denied {
+      color: red;
+    }
+
+    .admin-page .reset-button {
+      display: block;
+      margin-top: 20px;
+    }
+
+    .admin-page .reset-all {
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .admin-page .confirm-reset {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .admin-page .confirm-reset button {
+      padding: 8px 15px;
+      margin-right: 10px;
+      border-radius: 5px;
+      border: none;
+      background-color: #ff4d4d;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .admin-page .confirm-reset button:last-child {
+      margin-right: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login form section -->
+  <div class="login-container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <div class="input-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div class="input-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <div class="input-group">
+        <button type="button" onclick="validateForm()">Login</button>
+        <button type="button" onclick="forgotPassword()">Forgot Password</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Admin page section -->
+  <div class="admin-page" id="adminPage">
+    <span class="close-button" onclick="closeAdmin()">x</span>
+    <h2>Admin Page</h2>
+    <table class="attempt-log" id="attemptLog">
+      <thead>
+        <tr>
+          <th>Username Attempt</th>
+          <th>Password Attempt</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="logBody">
+        <!-- Log content will be dynamically added here -->
+      </tbody>
+    </table>
+
+    <div class="reset-button">
+      <button class="reset-all" onclick="confirmReset()">Reset All</button>
+      <div class="confirm-reset" id="confirmReset">
+        <button onclick="resetAttempts()">Confirm</button>
+        <button onclick="cancelReset()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function validateForm() {
+      var username = document.getElementById("username").value;
+      var password = document.getElementById("password").value;
+      var attempts = JSON.parse(localStorage.getItem("loginAttempts")) || [];
+
+      if (username === "admin" && password === "123") {
+        attempts.push({ username: username, password: password, status: "Access Granted" });
+        localStorage.setItem("loginAttempts", JSON.stringify(attempts));
+        document.getElementById("adminPage").style.display = "block";
+        displayAttemptLog();
+      } else {
+        attempts.push({ username: username, password: password, status: "Access Denied" });
+        localStorage.setItem("loginAttempts", JSON.stringify(attempts));
+        alert("Incorrect username or password. Please try again.");
+      }
+    }
+
+    function displayAttemptLog() {
+      var attempts = JSON.parse(localStorage.getItem("loginAttempts")) || [];
+      var logBody = document.getElementById("logBody");
+      logBody.innerHTML = "";
+
+      attempts.forEach(function(attempt) {
+        var row = logBody.insertRow(-1);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+        var cell3 = row.insertCell(2);
+
+        cell1.innerHTML = attempt.username;
+        cell2.innerHTML = attempt.password;
+        cell3.innerHTML = attempt.status;
+
+        if (attempt.status === "Access Granted") {
+          cell3.classList.add("access-granted");
+        } else {
+          cell3.classList.add("access-denied");
+        }
+      });
+    }
+
+    function closeAdmin() {
+      document.getElementById("adminPage").style.display = "none";
+      document.getElementById("username").value = ""; // Clear username field
+      document.getElementById("password").value = ""; // Clear password field
+    }
+
+    function confirmReset() {
+      document.getElementById("confirmReset").style.display = "block";
+    }
+
+    function resetAttempts() {
+      localStorage.removeItem("loginAttempts");
+      document.getElementById("logBody").innerHTML = "";
+      document.getElementById("confirmReset").style.display = "none";
+    }
+
+    function cancelReset() {
+      document.getElementById("confirmReset").style.display = "none";
+    }
+
+    function forgotPassword() {
+      var username = prompt("Please enter your username:");
+      if (username === "admin") {
+        var securityAnswer = prompt("Security Question: What is the name of your cat?");
+        if (securityAnswer && securityAnswer.toLowerCase() === "emmett") {
+          alert("Temporary access granted!");
+          document.getElementById("adminPage").style.display = "block";
+          displayAttemptLog();
+
+          // Log access through 'Forgot Password' in admin records
+          logAttempt(username, securityAnswer, true);
+        } else {
+          alert("Incorrect security answer or empty input. Access denied.");
+        }
+      } else {
+        alert("Username not found.");
+      }
+    }
+
+    function logAttempt(username, password, status) {
+      var attempts = JSON.parse(localStorage.getItem("loginAttempts")) || [];
+      attempts.push({ username: username, password: password, status: status ? "Access Granted (Forgot Password)" : "Access Denied (Forgot Password)" });
+      localStorage.setItem("loginAttempts", JSON.stringify(attempts));
+    }
+  </script>
+</body>
+</html>
